@@ -11,16 +11,16 @@ import QA.QA;
 public class Google
 {
 	private static final String SzukajOnet = "http://szukaj.onet.pl/wyniki.html?qt=";
+	private static final String SzukajOnetStrona =  "http://szukaj.onet.pl/0,{page},query.html?qt=";
 	private static final String GoogleAPI = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=";
+	private static final String EncodingUTF8 = "UTF-8";
 	
 	public static String zapytajGoogla(String pytanie)
 	{
-		String adres = Google.GoogleAPI+pytanie;
-		//adres = "http://www.google.pl?q="+pytanie;
+		String adres = Google.SzukajOnet+pytanie;
 		try
 		{
 			adres = Google.GoogleAPI+URLEncoder.encode(pytanie, "UTF-8");
-			;
 			return File.pobierzZUrla(adres);
 		}
 		catch (MalformedURLException e)
@@ -36,25 +36,27 @@ public class Google
 		return "";
 	}
 	
-	public static String zapytajGoogla(String pytanie, int page)
+	public static String zapytajStrone(String pytanie, int page)
 	{
-		String adres = "http://szukaj.onet.pl/0,"+page+",query.html?qt="+pytanie;
+		String adres = Google.SzukajOnetStrona;
+		adres = adres.replaceFirst("\\{page\\}", String.valueOf(page))+pytanie;
 		try
 		{
-			adres = Google.GoogleAPI+pytanie;
-			adres = URLEncoder.encode(pytanie, "UTF-8");
+			pytanie = URLEncoder.encode(pytanie, Google.EncodingUTF8);
+			adres = adres+pytanie;
+			QA.sopln(adres);
 			try
 			{
 				return File.pobierzZUrla(adres);
 			}
 			catch (MalformedURLException e)
 			{
-				QA.sop("MalformedURLException");
+				QA.sopln("MalformedURLException");
 				e.printStackTrace();
 			}
 			catch (IOException e)
 			{
-				QA.sop("IOException");
+				QA.sopln("IOException");
 				e.printStackTrace();
 			}
 			
@@ -64,8 +66,18 @@ public class Google
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-
+		
 		return "";
+	}
+	
+	public static String zapytajNStron(String pytanie, int ileStron)
+	{
+		String result = "";
+		for (int i = 0; i < ileStron; ++i)
+		{
+			result += Google.zapytajStrone(pytanie, i);
+		}
+		return result;
 	}
 	
 }

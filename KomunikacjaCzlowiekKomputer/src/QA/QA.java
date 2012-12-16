@@ -8,7 +8,6 @@ import java.util.Scanner;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-//import net.sf.json.JSONSerializer;
 
 public class QA
 {
@@ -19,9 +18,6 @@ public class QA
 	private String Y;
 	
 	private String przymiotnik;
-	
-	// private Vector<String[]> slownikSynonimow = new Vector<String[]>();
-	// private Vector<String[]> slownikJP = new Vector<String[]>();
 	
 	public QA()
 	{
@@ -35,12 +31,12 @@ public class QA
 		try
 		{
 			fraza = URLEncoder.encode(fraza, "UTF-8");
-			String HTMLdokument = Sieć.Google.zapytajGoogla(fraza);
+			String HTMLdokument = Sieć.Google.zapytajNStron(fraza, 10);
 			QA.sopln(HTMLdokument);
 			Vector<String> links = this.znajdzLinki(HTMLdokument);
-			for (int i = 0; i < links.size(); ++i)
+			for (String link : links)
 			{
-				QA.sopln(links.get(i));
+				QA.sopln(link);
 			}
 		}
 		catch (UnsupportedEncodingException e)
@@ -53,12 +49,7 @@ public class QA
 	
 	public static void main(String[] args)
 	{
-		/*
-		 * String l = Sieć.Google.zapytajGoogla("Lalka");
-		 * Sieć.File.stripTags(l);
-		 */
 		QA qa = new QA();
-		//qa.wprowadzPytanie();
 		qa.pytanie ="praca domowa";
 		qa.rzucWGoogle();
 		
