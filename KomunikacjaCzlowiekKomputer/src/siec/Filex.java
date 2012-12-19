@@ -1,25 +1,27 @@
-package Sieć;
+package siec;
+
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
 import java.net.URL;
 import java.net.URLConnection;
+
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import QA.QA;
+import qa.QA;
 
-import exception.NoLocalFileException;
-
-
-public class File
+public class Filex
 {
-	public static String zaladujPlik(String nazwa) throws NoLocalFileException, FileNotFoundException, IOException
+	public static String zaladujPlik(String nazwa) throws FileNotFoundException, IOException
 	{
 		String wynik = "";
 		FileReader fr;
@@ -73,60 +75,58 @@ public class File
 	
 	public static String stripTags(String inp)
 	{
-		Vector<String> znaczniki = new Vector<String>();
-		String HTMLTag = "";
 		boolean intag = false;
 		String outp = "";
-		Character prevChar = new Character(' ');
 		for (int i=0; i < inp.length(); ++i)
 		{
 		    if (!intag && inp.charAt(i) == '<')
 	        {
 	            intag = true;
-	            prevChar = inp.charAt(i);
+	            
 	            continue;
 	        }
-		    if (intag && inp.charAt(i) == '/' && prevChar == '<')
-		    {
-		    	
-		    }
 	        if (intag && inp.charAt(i) == '>')
 	        {
 	            intag = false;
 	            continue;
 	        }
 	        if (!intag)
-	        {
-	        	znaczniki.add(HTMLTag);
-	            outp = outp + inp.charAt(i);
-	            HTMLTag = "";
-	        }
-	        else
-	        {
-	        	HTMLTag += inp.charAt(i);
-	        }
-		}
-		Iterator<String> it = znaczniki.iterator();
-		while (it.hasNext())
-		{
-			QA.sop(it.next()+", ");
+	        {      	
+	            outp = outp + inp.charAt(i);	        }
 		}
 		return outp;
 	}
-	public static String stripTags2(String inp)
+	
+	public static long saveToFile(String filename, String content)
 	{
-		Pattern wzorzec = Pattern.compile("<([a-zA-Z]+\\s+)>");
-		Matcher sekwencja = wzorzec.matcher(inp);
-		String outp = "";
-		while (sekwencja.find())
-		{
-			QA.sopln(sekwencja.group());
-			//QA.sopln(sekwencja.group(2));
-			//QA.sopln(sekwencja.group(3));
-		}
-		//outp = outp + inp.charAt(i);
-		return outp;
 		
-		//Jak się nazywa największy pałac w Europie
+		long BeforeSave = Filex.size(filename);
+		long AfterSave = 0;
+		try
+		{
+			FileWriter fw = new FileWriter(filename);
+			BufferedWriter bw = new BufferedWriter(fw);
+			bw.write(content);
+			bw.close();
+			fw.close();
+			AfterSave = Filex.size(filename);
+		}
+		catch(IOException ioe)
+		{
+			QA.sopln("Logger.log() cannot file found!");
+		}
+		return AfterSave - BeforeSave;
+	}
+	
+	public static long size(String filename)
+	{
+		java.io.File f = new java.io.File(filename);
+		return f.length();
+	}
+	
+	public static long append(String filename, String s)
+	{
+		long result = 0;
+		return result;
 	}
 }

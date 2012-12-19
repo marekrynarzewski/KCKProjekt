@@ -1,4 +1,4 @@
-package QA;
+package qa;
 
 import java.util.*;
 

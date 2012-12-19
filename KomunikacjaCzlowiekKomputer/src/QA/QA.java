@@ -1,4 +1,4 @@
-package QA;
+package qa;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -9,10 +9,15 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import logger.Logger;
+import logger.LoggerError;
+
+import exception.Error;
+
 public class QA
 {
 	public static Scanner input = new Scanner(System.in);
-	
+	private static Logger logger = new Logger();
 	private String pytanie = "";
 	private String X;
 	private String Y;
@@ -26,33 +31,44 @@ public class QA
 	public void rzucWGoogle()
 	{
 		String fraza = this.przymiotnik + " " + this.X + " w " + this.Y;
-		//String fraza = this.pytanie;
+		QA.logger.log("Buduję frazę "+fraza);
 		fraza = fraza.toLowerCase();
+		QA.logger.log("lowerCase of fraza is \""+fraza+"\"");
 		try
 		{
 			fraza = URLEncoder.encode(fraza, "UTF-8");
-			String HTMLdokument = Sieć.Google.zapytajNStron(fraza, 10);
-			QA.sopln(HTMLdokument);
+			QA.logger.log("koduję frazę w UTF8");
+			String HTMLdokument = siec.Google.zapytajNStron(fraza, 10);
+			QA.logger.log("Pytam 10 stron o frazę");
 			Vector<String> links = this.znajdzLinki(HTMLdokument);
+			QA.logger.log("Szukam linkow w znalezionym dokumenci");
+			QA.logger.log("Znalezione linki:");
 			for (String link : links)
 			{
 				QA.sopln(link);
+				QA.logger.log(link);
 			}
 		}
 		catch (UnsupportedEncodingException e)
 		{
 			QA.sopln("niewspierane kodowanie");
-			e.printStackTrace();
+			logger.log("Błąd: Niewspieranie logowanie");
+			System.exit(Error.ErrorEncoding);
 		}
-		
 	}
 	
 	public static void main(String[] args)
 	{
+		//Logger logger = new Logger();
+		//FileUtils.writeStringToFile(Logger.getLogfile());
+		/*
 		QA qa = new QA();
-		qa.pytanie ="praca domowa";
+		QA.logger.log("Utworzylem nowy obiekt QA");
+		qa.wprowadzPytanie();
+		QA.logger.log("Odczytałem pytanie");
 		qa.rzucWGoogle();
-		
+		QA.logger.log("rzuciłem w Google");
+		*/
 	}
 	
 	public void uruchomAlgorytm()
@@ -68,7 +84,13 @@ public class QA
 	{
 		QA.sopln("Pytanie: ");
 		this.pytanie = QA.input.nextLine();
+		QA.logger.log("Pytanie = \""+pytanie+"\"");
 		this.przetworzPytanie();
+		QA.logger.log("Przetwarzam pytanie");
+		QA.logger.log("Wyniki");
+		QA.logger.log("przymiotnik = "+this.przymiotnik);
+		QA.logger.log("X = "+this.X);
+		QA.logger.log("Y = "+this.Y);
 	}
 	
 	public static void sop(String str)
@@ -76,16 +98,15 @@ public class QA
 		System.out.print(str);
 	}
 	
-	public static void sopln(String p)
+	public static void sopln(String str)
 	{
-		System.out.println(p);
+		System.out.println(str);
 	}
 	
 	private static String usunPolskieZnaki(String slowo)
 	{
 		String[] pz = {"Ä™", "Ăł", "Ä…", "Ĺ›", "Ĺ‚", "ĹĽ", "Ĺş", "Ä‡", "Ĺ„", "Ä�", "Ă“", "Ä„", "Ĺš", "Ĺ�", "Ĺ»", "Ĺą", "Ä†", "Ĺ�"};
 		String az = "eoaslzzcnEOASLZZCN";
-		//QA.sopln(az.toUpperCase());
 		for (int i = 0; i < pz.length; ++i)
 		{
 			slowo = slowo.replaceAll(pz[i], String.valueOf(az.charAt(i)));
@@ -97,7 +118,7 @@ public class QA
 	{
 		this.pytanie = QA.usunPolskieZnaki(this.pytanie);
 		this.pytanie = this.pytanie.toLowerCase();
-		Pattern wzorzec = Pattern.compile("([nN]ajwieksz[yea]) ([a-zA-Z]+) w ([a-zA-Z]+)");
+		Pattern wzorzec = Pattern.compile("([nN]aj[a-zA-Z]+[yea]) ([a-zA-Z]+) w ([a-zA-Z]+)");
 		Matcher sekwencja = wzorzec.matcher(this.pytanie);
 		if (sekwencja.find())
 		{
@@ -105,26 +126,25 @@ public class QA
 			this.X = sekwencja.group(2);
 			this.Y = sekwencja.group(3);
 		}
-		
 	}
 	
-	private Vector<String> znajdzLinki(String HTMLdokument)
+	private Vector<String> znajdzLinki(String HTMLdokument) 
 	{
 		Vector<String> linki = new Vector<String>();
-		Pattern wzorzecLinka = Pattern.compile("<a href=\"(http://\\S+)\">");// [a-zA-Z]+\">");
+		Pattern wzorzecLinka = Pattern.compile("<a href=\"(http://\\S+)\">");
 		Matcher wynik = wzorzecLinka.matcher(HTMLdokument);
 		while (wynik.find())
 		{
 			String link = wynik.group(1);
 			try
 			{
-				URI uri = new URI(link);
+				new URI(link);
 			}
 			catch (URISyntaxException e)
 			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				QA.sopln("Nie zidentyfikować link!");
+				QA.sopln("Nie zidentyfikowany link!");
+				QA.logger.log("Błąd: Niezidentyfikowany link");
+				System.exit(Error.ErrorLink);
 			}
 			if (!link.contains("onet"))
 			{

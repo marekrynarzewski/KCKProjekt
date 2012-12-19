@@ -1,12 +1,15 @@
-package Sieć;
+package siec;
 
+import exception.Error;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
 
-import QA.QA;
+import qa.QA;
+
 
 public class Google
 {
@@ -21,18 +24,24 @@ public class Google
 		try
 		{
 			adres = Google.GoogleAPI+URLEncoder.encode(pytanie, "UTF-8");
-			return File.pobierzZUrla(adres);
+			return Filex.pobierzZUrla(adres);
 		}
 		catch (MalformedURLException e)
 		{
 			QA.sop("MalformedURLException");
-			e.printStackTrace();
+			System.exit(Error.ErrorInUrl);
+		}
+		catch(UnknownHostException uhe)
+		{
+			QA.sopln("Nieznany host lub Brak internetu");
+			System.exit(Error.ErrorHost);
 		}
 		catch (IOException e)
 		{
 			QA.sop("IOException");
-			e.printStackTrace();
+			System.exit(Error.ErrorIO);
 		}
+		
 		return "";
 	}
 	
@@ -47,17 +56,17 @@ public class Google
 			QA.sopln(adres);
 			try
 			{
-				return File.pobierzZUrla(adres);
+				return Filex.pobierzZUrla(adres);
 			}
 			catch (MalformedURLException e)
 			{
 				QA.sopln("MalformedURLException");
-				e.printStackTrace();
+				System.exit(Error.ErrorLink);
 			}
 			catch (IOException e)
 			{
 				QA.sopln("IOException");
-				e.printStackTrace();
+				System.exit(Error.ErrorIO);
 			}
 			
 		}
