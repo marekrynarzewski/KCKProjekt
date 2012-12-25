@@ -3,26 +3,26 @@ package qa;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Scanner;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import logger.Logger;
-import logger.LoggerError;
-
 import exception.Error;
+import java.io.*;
 
 public class QA
 {
-	public static Scanner input = new Scanner(System.in);
-	private static Logger logger = new Logger();
+	public static Scanner input = new Scanner(System.in, "UTF-8");
+	//private static Logger logger = new Logger();
 	private String pytanie = "";
 	private String X;
 	private String Y;
-	
+	private String przyimek;
 	private String przymiotnik;
+	private Vector<String> linki;
+	private Vector<String> synonimy = new Vector<String>();
 	
 	public QA()
 	{
@@ -30,53 +30,28 @@ public class QA
 	
 	public void rzucWGoogle()
 	{
-		String fraza = this.przymiotnik + " " + this.X + " w " + this.Y;
-		QA.logger.log("Buduję frazę "+fraza);
-		fraza = fraza.toLowerCase();
-		QA.logger.log("lowerCase of fraza is \""+fraza+"\"");
-		try
+		String fraza = this.przymiotnik + " " + this.X + " "+this.przyimek+" " + this.Y;
+		if (!fraza.contains("null"))
 		{
-			fraza = URLEncoder.encode(fraza, "UTF-8");
-			QA.logger.log("koduję frazę w UTF8");
+			fraza = fraza.toLowerCase();
 			String HTMLdokument = siec.Google.zapytajNStron(fraza, 10);
-			QA.logger.log("Pytam 10 stron o frazę");
-			Vector<String> links = this.znajdzLinki(HTMLdokument);
-			QA.logger.log("Szukam linkow w znalezionym dokumenci");
-			QA.logger.log("Znalezione linki:");
-			for (String link : links)
-			{
-				QA.sopln(link);
-				QA.logger.log(link);
-			}
-		}
-		catch (UnsupportedEncodingException e)
-		{
-			QA.sopln("niewspierane kodowanie");
-			logger.log("Błąd: Niewspieranie logowanie");
-			System.exit(Error.ErrorEncoding);
+			this.linki = this.znajdzLinki(HTMLdokument);
 		}
 	}
 	
 	public static void main(String[] args)
 	{
-		//Logger logger = new Logger();
-		//FileUtils.writeStringToFile(Logger.getLogfile());
-		/*
 		QA qa = new QA();
-		QA.logger.log("Utworzylem nowy obiekt QA");
-		qa.wprowadzPytanie();
-		QA.logger.log("Odczytałem pytanie");
-		qa.rzucWGoogle();
-		QA.logger.log("rzuciłem w Google");
-		*/
+		qa.uruchomAlgorytm();
 	}
 	
 	public void uruchomAlgorytm()
 	{
-		// TODO: usuwanie znaków interpunkcyjnych w this.pytanie
-		// TODO: podział this.pytania na słowa
-		// TODO: wyszukiwanie form fleksyjnych każdego ze słów
-		// TODO: uzyskanie synonimów przymiotników
+		this.wprowadzPytanie();
+		this.rzucWGoogle();
+		// TODO: wyszukiwanie form fleksyjnych kaĹĽdego ze sĹ‚Ăłw
+		// TODO: uzyskanie synonimĂłw przymiotnikĂłw
+		
 		// TODO: wyszukanie
 	}
 	
@@ -84,13 +59,8 @@ public class QA
 	{
 		QA.sopln("Pytanie: ");
 		this.pytanie = QA.input.nextLine();
-		QA.logger.log("Pytanie = \""+pytanie+"\"");
+	    QA.sopln(this.pytanie);
 		this.przetworzPytanie();
-		QA.logger.log("Przetwarzam pytanie");
-		QA.logger.log("Wyniki");
-		QA.logger.log("przymiotnik = "+this.przymiotnik);
-		QA.logger.log("X = "+this.X);
-		QA.logger.log("Y = "+this.Y);
 	}
 	
 	public static void sop(String str)
@@ -105,8 +75,9 @@ public class QA
 	
 	private static String usunPolskieZnaki(String slowo)
 	{
-		String[] pz = {"Ä™", "Ăł", "Ä…", "Ĺ›", "Ĺ‚", "ĹĽ", "Ĺş", "Ä‡", "Ĺ„", "Ä�", "Ă“", "Ä„", "Ĺš", "Ĺ�", "Ĺ»", "Ĺą", "Ä†", "Ĺ�"};
-		String az = "eoaslzzcnEOASLZZCN";
+		String[] pz = {};
+		String az = "ęóąśłżźćńĘÓĄŚŁŻŹĆŃ";
+//		String az = "eoaslzzcnEOASLZZCN";
 		for (int i = 0; i < pz.length; ++i)
 		{
 			slowo = slowo.replaceAll(pz[i], String.valueOf(az.charAt(i)));
@@ -114,17 +85,35 @@ public class QA
 		return slowo;
 	}
 	
+	/**
+	 * zwraca nowe sĹ‚owo stworzone na podstawie parametru z ~ zaznaczajÄ…c polski znak.
+	 * @param slowo
+	 * @return String
+	 */
+	private static String polskieZnaki(String slowo)
+	{
+		String[] pz = {"Ă„â„˘", "Ä‚Ĺ‚", "Ă„â€¦", "Äąâ€ş", "Äąâ€š", "ÄąÄ˝", "ÄąĹź", "Ă„â€ˇ", "Äąâ€ž", "Ă„ďż˝", "Ä‚â€ś", "Ă„â€ž", "ÄąĹˇ", "Äąďż˝", "ÄąÂ»", "ÄąÄ…", "Ă„â€ ", "Äąďż˝"};
+		String az = "eoaslzzcnEOASLZZCN";
+		for (int i = 0; i < pz.length; ++i)
+		{
+		    String chr = String.valueOf(az.charAt(i));
+			slowo = slowo.replaceAll(pz[i], String.valueOf(az.charAt(i))+'~');
+		}
+		return slowo;
+	}
+	//sl~owo:sl~ow;1:1-14;N134
 	private void przetworzPytanie()
 	{
 		this.pytanie = QA.usunPolskieZnaki(this.pytanie);
 		this.pytanie = this.pytanie.toLowerCase();
-		Pattern wzorzec = Pattern.compile("([nN]aj[a-zA-Z]+[yea]) ([a-zA-Z]+) w ([a-zA-Z]+)");
+		Pattern wzorzec = Pattern.compile("([nN]aj[a-zA-Z]+[yea]) ([a-zA-Z\\ ]+) (we|w) ([a-zA-Z]+)");
 		Matcher sekwencja = wzorzec.matcher(this.pytanie);
 		if (sekwencja.find())
 		{
 			this.przymiotnik = sekwencja.group(1);
 			this.X = sekwencja.group(2);
-			this.Y = sekwencja.group(3);
+			this.przyimek = sekwencja.group(3);
+			this.Y = sekwencja.group(4);
 		}
 	}
 	
@@ -142,8 +131,6 @@ public class QA
 			}
 			catch (URISyntaxException e)
 			{
-				QA.sopln("Nie zidentyfikowany link!");
-				QA.logger.log("Błąd: Niezidentyfikowany link");
 				System.exit(Error.ErrorLink);
 			}
 			if (!link.contains("onet"))

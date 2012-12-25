@@ -48,7 +48,7 @@ public class Google
 	public static String zapytajStrone(String pytanie, int page)
 	{
 		String adres = Google.SzukajOnetStrona;
-		adres = adres.replaceFirst("\\{page\\}", String.valueOf(page))+pytanie;
+		adres = adres.replaceFirst("\\{page\\}", String.valueOf(page));
 		try
 		{
 			pytanie = URLEncoder.encode(pytanie, Google.EncodingUTF8);

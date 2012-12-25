@@ -2,10 +2,11 @@ package logger;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
 import java.util.Date;
 
+import qa.QA;
 import siec.Filex;
+import java.text.SimpleDateFormat;
 
 public class Logger
 {
@@ -14,9 +15,8 @@ public class Logger
 	public void log(String s)
 	{
 		Date d = new Date();
-		//DateFormat df = new DateFormat();
-		//df.format(d);
-		String dt = d.toLocaleString();
+		SimpleDateFormat f = new SimpleDateFormat ("yyyy.MM.dd hh:mm:ss a");
+		String dt = f.format(d);
 		try
 		{
 			String con = Filex.zaladujPlik(LogFile);
