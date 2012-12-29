@@ -2,9 +2,28 @@ package exception;
 
 public class Error
 {
-	public static final int ErrorLink = -1;
+	/**
+	 * określa błąd w kodowaniu
+	 */
 	public static final int ErrorEncoding = -2;
-	public static final int ErrorHost = -1;
-	public static final int ErrorIO = -2;
-	public static final int ErrorInUrl = -3;
+	
+	/**
+	 * określa nieznany host
+	 */
+	public static final int ErrorHost = -3;
+	
+	/**
+	 * określa błąd wejścia i wyjścia
+	 */
+	public static final int ErrorIO = -4;
+	
+	/**
+	 * określa błąd w linku
+	 */
+	public static final int ErrorInUrl = -5;
+	
+	/**
+	 * określa błąd podczas przetwarzania pytania.
+	 */
+	public static final int ProcessingQuestion = -6;
 }
