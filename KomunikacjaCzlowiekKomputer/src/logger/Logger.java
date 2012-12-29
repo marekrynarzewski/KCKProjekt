@@ -1,43 +1,51 @@
 package logger;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Date;
 
-import qa.QA;
 import siec.Filex;
 import java.text.SimpleDateFormat;
 
 public class Logger
 {
-	private static final String LogFile = "logs/logfile.txt";
+	private static final String logFile = "logs/logfile.txt";
 	
-	public void log(String s)
+	/**
+	 * loguje do pliku logowania
+	 * @param s
+	 */
+	public static void log(String s)
 	{
-		Date d = new Date();
-		SimpleDateFormat f = new SimpleDateFormat ("yyyy.MM.dd hh:mm:ss a");
-		String dt = f.format(d);
+		Logger.checkExistsLogFile();
+		String dt = Logger.uzyskajDateWMoimFormacie();
 		try
 		{
-			String con = Filex.zaladujPlik(LogFile);
-			con += dt+" "+s+"\n";
-			Filex.saveToFile(LogFile, con);
-		}
-		catch (FileNotFoundException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			String con = dt+" "+s+"\n";
+			Filex.append(Logger.logFile, con);
 		}
 		catch (IOException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
-	public Logger()
+	/**
+	 * uzyskuje datę w moim formacie
+	 * @return
+	 */
+	private static String uzyskajDateWMoimFormacie()
 	{
-		java.io.File f = new java.io.File(Logger.LogFile);
+		Date d = new Date();
+		SimpleDateFormat f = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss a");
+		return f.format(d);
+	}
+	
+	/**
+	 * sprawdza czy plik logowania istnieje
+	 */
+	private static void checkExistsLogFile()
+	{
+		java.io.File f = new java.io.File(Logger.logFile);
 		if (!f.exists())
 		{
 			try
@@ -46,7 +54,6 @@ public class Logger
 			}
 			catch (IOException e)
 			{
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
