@@ -1,19 +1,20 @@
 package qa;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLConnection;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.Vector;
@@ -121,7 +122,8 @@ public class QA
 				
 			}
 			QA.warn(this.errorsCount + " linków nie udało się pobrać.");
-			// Debug.debugMap(this.losk2);
+			//NavigableMap<String, Integer> nm = this.losk.descendingMap();
+			//Debug.debugMap(nm);
 			//this.sortujMape(losk);
 		}
 	}
@@ -402,4 +404,25 @@ public class QA
 		}
 		return false;
 	}
+	
+	public static Map<String,Integer> sortByComparator(Map<String,Integer> unsortMap) {
+
+	    List list = new LinkedList(unsortMap.entrySet());
+
+	    //sort list based on comparator
+	    Collections.sort(list, new Comparator() {
+	        public int compare(Object o1, Object o2) {
+	            return ((Comparable) ((Map.Entry) (o2)).getValue())
+	                    .compareTo(((Map.Entry) (o1)).getValue());
+	        }
+	    });
+
+	    //put sorted list into map again
+	    Map sortedMap = new LinkedHashMap();
+	    for (Iterator it = list.iterator(); it.hasNext();) {
+	        Map.Entry entry = (Map.Entry)it.next();
+	        sortedMap.put(entry.getKey(), entry.getValue());
+	    }
+	    return sortedMap;
+	}   
 }
