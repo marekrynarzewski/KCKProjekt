@@ -13,7 +13,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
+import java.util.Map;
 import java.util.Vector;
+
+import qa.QA;
 
 import logger.Logger;
 
@@ -165,4 +168,15 @@ public class Filex
 		}
 		return "";
 	}
+	
+	public static <T, K> long mapaDoPliku(String plik, Map<T, K> mapa)
+	{
+		String content = "";
+		for (Map.Entry<T, K> wpis : mapa.entrySet())
+		{
+			content += wpis.getKey()+" = "+wpis.getValue()+"\n";
+		}
+		return Filex.saveToFile(plik, content);
+	}
+
 }

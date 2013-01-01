@@ -1,13 +1,12 @@
 package siec;
 
-import exception.Error;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
-import java.net.UnknownHostException;
+
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,14 +32,6 @@ public class Google
 		{
 			String adres = Google.SzukajOnet+URLEncoder.encode(pytanie, Google.EncodingUTF8);
 			return Filex.pobierzZUrla(adres);
-		}
-		catch (MalformedURLException e)
-		{
-			QA.warn("Link wywołał błąd: "+e.getMessage());
-		}
-		catch(UnknownHostException uhe)
-		{
-			QA.warn("Nieznany host lub Brak internetu");
 		}
 		catch (IOException e)
 		{
@@ -92,12 +83,14 @@ public class Google
 	 * @param ileStron tyle pyta stron
 	 * @return suma wyników ze wszystkich stron
 	 */
-	public static String zapytajNStron(String pytanie, int ileStron)
+	public static Vector<String> zapytajNStron(String pytanie, int ileStron)
 	{
-		String result = "";
+		Vector<String> result = new Vector<String>();
 		for (int i = 0; i < ileStron; ++i)
 		{
-			result += Google.zapytajStrone(pytanie, i);
+			QA.info("Pobieram wyniki ze "+i+" strony.");
+			String html = Google.zapytajStrone(pytanie, i);
+			result.addAll(Google.znajdzLinki(html));
 		}
 		return result;
 	}
@@ -202,7 +195,23 @@ public class Google
 		{
 			return wynik.group(1);
 		}
-		return null;
+		return "";
+	}
+	
+	public static Vector<String> znajdzLinki(String dokument)
+	{
+		Vector<String> linki = new Vector<String>();
+		dokument = siec.Google.zwrocDivaZWynikami(dokument);
+		//QA.info("Uzyskuję diva z wynikami.");
+		Pattern wzorzecLinka = Pattern.compile("<a href=\"(http://\\S+)\">");
+		//QA.info("Przygotowuję wyrażenie regularne.");
+		Matcher wynik = wzorzecLinka.matcher(dokument);
+		while (wynik.find())
+		{
+			String link = wynik.group(1);
+			linki.add(link);
+		}
+		return linki;
 	}
 	
 }

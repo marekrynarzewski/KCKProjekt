@@ -21,6 +21,8 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import arry.Arrays;
+
 //owns imports
 import siec.Filex;
 
@@ -33,23 +35,35 @@ public class QA
 	public static Scanner wejscie = new Scanner(System.in);
 	
 	private String pytanie = "";
-	private String X;
-	private String Y;
-	private String przyimek;
-	private String przymiotnik;
+	private String X = "";
+	private String Y = "";
+	private String przyimek = "";
+	private String przymiotnik = "";
+	private String fraza = "";
 	
 	private Vector<String> linki;
-	
-	private String fraza;
-	
+		
 	private TreeMap<String, Integer> losk = new TreeMap<String, Integer>();
 	
 	private String[] elementyFrazy;
 	private String[] akceptowaneTypyPlikow = {"html", "txt"};
 	
 	private int errorsCount = 0;
+	private String[] przyimki = {"z", "do", "na", "bez", "za", "pod", "u", "w", "nad", "od", "po"};
+	private String[] linkiZOnetu = {
+			"http://boksy.onet.pl/",
+			"http://www.onet.pl",
+			"http://m.onet.pl",
+			"http://biznes.onet.pl",
+			"http://wiadomosci.onet.pl",
+			"http://poczta.onet.pl",
+			"http://www.onet.pl/wszystkie/",
+			"http://www.onet.pl/prywatnosc/",
+			"http://natemat.onet.pl/",
+			"http://secure.onet.pl/logowanie.html?app_id=65&amp;url=zarzadzaniesg.html"
+	};
 	
-	public static void main(String[] args) throws IOException
+	public static void main(String[] args)
 	{
 		QA qa = new QA();
 		qa.uruchomAlgorytm();
@@ -107,27 +121,54 @@ public class QA
 	 */
 	public void uruchomAlgorytm()
 	{
+		this.przywitajSie();
 		this.wprowadzPytanie();
 		if (this.rzucWGoogle())
 		{
 			QA.info("Pomyślnie zapytałem Googla.");
-			Logger.log("Przetwarzam linki");
 			int idx = 0;
+			int procent = 0;
 			for (String link : this.linki)
 			{
-				Logger.log("Przetwarzam link '" + link + "'");
-				QA.info("Przetwarzam "+idx+". na "+this.linki.size()+" link");
-				this.przetwarzaj(link);
-				++idx;
-				
+				idx = this.informujIPrzetwarzaj(idx, link, procent);
 			}
+			QA.info("Przetworzono 100% linków.");
 			QA.warn(this.errorsCount + " linków nie udało się pobrać.");
-			//NavigableMap<String, Integer> nm = this.losk.descendingMap();
-			//Debug.debugMap(nm);
-			//this.sortujMape(losk);
+			if (Filex.mapaDoPliku("mapa.ini", this.losk) > 0)
+			{
+				QA.info("Zapisałem do pliku mapa.ini mapę.");
+			}
 		}
 	}
+
+	private int informujIPrzetwarzaj(int idx, String link, int procent)
+	{
+		Logger.log("Przetwarzam link '" + link + "'");
+		procent = (idx*100)/this.linki.size();
+		if (procent % 5 == 0)
+			QA.info("Przetworzono "+procent+"% linków");
+		this.przetwarzaj(link);
+		++idx;
+		return idx;
+	}
 	
+	private static boolean isNumeric(String str)  
+	{
+		try
+		{
+			Double.parseDouble(str);
+		}
+		catch (NumberFormatException nfe)
+		{
+			return false;  
+	    }  
+	    return true;  
+	  }
+
+	private void przywitajSie()
+	{
+		QA.sopln("Program do odpowiadania\nna pytanie na podstawie wyników z Internetu.");
+	}
 	/**
 	 * wysyła zapytanie do {siec.Google.SzukajOnet} frazę zbudowaną
 	 * z przymiotnika, rzeczownika (X), przyimka i rzeczownika (Y)
@@ -139,16 +180,15 @@ public class QA
 		QA.sopln("Przygotowuję do wysłania frazę: "+this.fraza);
 		String[] elementyFrazy = { this.przymiotnik, this.X, this.przyimek, this.Y };
 		this.elementyFrazy = elementyFrazy;
+		this.linki = new Vector<String>();
 		if (!arry.Arrays.hasNullable(this.elementyFrazy))
 		{
 			this.fraza = this.fraza.toLowerCase();
-			String HTMLdokument = siec.Google.zapytajNStron(this.fraza, 10);
-			this.linki = this.znajdzLinki(HTMLdokument);
+			this.linki.addAll(siec.Google.zapytajNStron(this.fraza, 10));
 			QA.sopln("Znalazłem "+this.linki.size()+" linków");
 			Logger.log("Znalazłem " + this.linki.size() + " linków dla frazy '" + this.fraza + "'.");
 			return true;
 		}
-		Logger.log("Fraza '" + this.fraza + "' zawiera null.");
 		return false;
 	}
 	
@@ -183,6 +223,7 @@ public class QA
 			Logger.log("X = '" + this.X + "'.");
 			Logger.log("przyimek = '" + this.przyimek + "'.");
 			Logger.log("Y = '" + this.Y + "'.");
+			Logger.log("\n");
 			QA.info("Pozytywny wynik przetwarzania.");
 		}
 		else
@@ -191,49 +232,47 @@ public class QA
 			QA.exit("Negatywny wynik przetwarzania.", Error.ProcessingQuestion);
 		}
 	}
-	/**
-	 * wyszukuje linki w parametrze dokument.
-	 * @param dokument - text HTMLa zwrócony przez wyszukiwarkę
-	 * @return wektor linków będących Stringami.
-	 */
-	private Vector<String> znajdzLinki(String dokument)
+
+	private int czyZawieraElementFrazy(Vector<String> linki, int refusedLinks, String link)
 	{
-		Vector<String> linki = new Vector<String>();
-		dokument = siec.Google.zwrocDivaZWynikami(dokument);
-		Pattern wzorzecLinka = Pattern.compile("<a href=\"(http://\\S+)\">");
-		Matcher wynik = wzorzecLinka.matcher(dokument);
-		int refusedLinks = 0;
-		while (wynik.find())
+		if (Arrays.contains(this.linkiZOnetu, link))
 		{
-			String link = wynik.group(1);
-			try
+			return refusedLinks;
+		}
+		int zawieraElementowFrazy = 0;
+		for (String elementFrazy : this.elementyFrazy)
+		{
+			if (link.contains(elementFrazy) && elementFrazy != this.przyimek)
 			{
-				new URI(link);
-			}
-			catch (URISyntaxException e)
-			{
-				Logger.log("Link " + link + " zawiera błąd. Szczegóły: " + e.getMessage() + ".");
-				QA.warn("Błąd w linku '" + link + "'.");
-			}
-			if (!link.contains("onet"))
-			{
-				linki.add(link);
-			}
-			else
-			{
-				//TODO: inteligentne odrzucanie linków.
-				Logger.log("Odrzuciłem link '" + link + "'.");
-				++refusedLinks;
+				++zawieraElementowFrazy;
 			}
 		}
-		if (refusedLinks > 0)
+		if (zawieraElementowFrazy >= 1)
 		{
-			QA.warn("Odrzuciłem "+refusedLinks+" linków.");
+			linki.add(link);
 		}
-		return linki;
+		else
+		{
+			Logger.log("Odrzuciłem link '" + link + "'.");
+			++refusedLinks;
+		}
+		return refusedLinks;
 	}
 	
-	
+	private boolean rozszerzeniePliku(String nazwaPliku)
+	{
+		String typPliku = Filex.getContentType(nazwaPliku);
+		Logger.log("Link '"+nazwaPliku+"' jest typu: "+typPliku);
+		for (String rozszerzenie : this.akceptowaneTypyPlikow)
+		{
+			if (typPliku.contains(rozszerzenie))
+			{
+				
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * przetwarza poszczególny URL.
@@ -246,15 +285,14 @@ public class QA
 		{
 			content = Filex.pobierzZUrla(url);
 			content = siec.Google.convertHTMLtoTXT(content);
-			Vector<String> listaOtoczenia = pobierzOtoczenieDlaWszystkichElementowFrazy(content, 50);
+			Vector<String> listaOtoczenia = pobierzOtoczenieDlaWszystkichElementowFrazy(content, 30);
 			this.dodajDoLosk(listaOtoczenia);
 		}
 		catch (IOException e)
 		{
 			Logger.log("Nie udało mi się pobrać linku z URLa '" + url + "'.");
-			Logger.log("Szczegóły: CallStack: "+e.getStackTrace()+", Message "+e.getMessage());
+			Logger.log("Message "+e.getMessage());
 			++this.errorsCount;
-			e.printStackTrace();
 		}
 	}
 	
@@ -266,13 +304,17 @@ public class QA
 	{
 		for (String otoczenie : listaOtoczenia)
 		{
-			if (!this.losk.containsKey(otoczenie))
+			otoczenie = otoczenie.toLowerCase();
+			if (!QA.isNumeric(otoczenie) && !Arrays.contains(this.przyimki, otoczenie))
 			{
-				this.losk.put(otoczenie, 1);
-			}
-			else
-			{
-				this.losk.put(otoczenie, (Integer)this.losk.get(otoczenie) + 1);
+				if (!this.losk.containsKey(otoczenie))
+				{
+					this.losk.put(otoczenie, 1);
+				}
+				else
+				{
+					this.losk.put(otoczenie, (Integer)this.losk.get(otoczenie) + 1);
+				}
 			}
 		}
 	}
@@ -319,8 +361,8 @@ public class QA
 	{
 		Vector<String> rezultat = new Vector<String>();
 		String[] slowa = wejscie.split(" ");
-		Vector<Integer> allPositions = arry.Arrays.findAll(slowa, slowo);
-		Vector<String> toVector = arry.Arrays.toVector(slowa);
+		Vector<Integer> allPositions = Arrays.findAll(slowa, slowo);
+		Vector<String> toVector = Arrays.toVector(slowa);
 		for (Integer s : allPositions)
 		{
 			int fromIndex = s - ileWyrazow;
@@ -336,7 +378,7 @@ public class QA
 			List<String> podRezultat = toVector.subList(fromIndex, toIndex);
 			for (String podWynik : podRezultat)
 			{
-				if (!rezultat.contains(podWynik))
+				if (!slowo.equals(podWynik) && !rezultat.contains(podWynik))
 				{
 					rezultat.add(podWynik);
 				}
@@ -371,58 +413,24 @@ public class QA
 		return rezultat;
 	}
 	
-	@SuppressWarnings({ "unchecked", "unused", "rawtypes" })
-	private void sortujMape(Hashtable<?, Integer> t)
-	{
-		ArrayList<Map.Entry<?, Integer>> l = new ArrayList(t.entrySet());
-		Collections.sort(l, new Comparator<Map.Entry<?, Integer>>()
-		{
-			public int compare(Map.Entry<?, Integer> o1, Map.Entry<?, Integer> o2)
-			{
-				return o1.getValue().compareTo(o2.getValue());
-			}
-		});
-		System.out.println(l);
-	}
-	
-	private boolean odpowiednieRozszerzeniePliku(String link)
-	{
-		for (String sufiks : this.akceptowaneTypyPlikow)
-		{
-			if (!link.endsWith(sufiks))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-	private boolean odrzucLink(String link)
-	{
-		if (!this.odpowiednieRozszerzeniePliku(link))
-		{
-			//siec.Google.
-		}
-		return false;
-	}
-	
-	public static Map<String,Integer> sortByComparator(Map<String,Integer> unsortMap) {
+	private static Map sortByValue(Map map) {
+	     List list = new LinkedList(map.entrySet());
+	     Collections.sort(list, new Comparator() {
+	          public int compare(Object o1, Object o2) {
+	               return ((Comparable) ((Map.Entry) (o1)).getValue())
+	              .compareTo(((Map.Entry) (o2)).getValue());
+	          }
+	     });
 
-	    List list = new LinkedList(unsortMap.entrySet());
-
-	    //sort list based on comparator
-	    Collections.sort(list, new Comparator() {
-	        public int compare(Object o1, Object o2) {
-	            return ((Comparable) ((Map.Entry) (o2)).getValue())
-	                    .compareTo(((Map.Entry) (o1)).getValue());
-	        }
-	    });
-
-	    //put sorted list into map again
-	    Map sortedMap = new LinkedHashMap();
+	    Map result = new LinkedHashMap();
 	    for (Iterator it = list.iterator(); it.hasNext();) {
 	        Map.Entry entry = (Map.Entry)it.next();
-	        sortedMap.put(entry.getKey(), entry.getValue());
+	        result.put(entry.getKey(), entry.getValue());
 	    }
-	    return sortedMap;
-	}   
+	    return result;
+	} 
+	
+	private void sortowaniePrzezZliczanie(Map<?, Integer> mapa)
+	{
+	}
 }

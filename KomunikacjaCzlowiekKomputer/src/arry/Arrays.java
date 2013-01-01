@@ -77,6 +77,19 @@ public class Arrays
 		}
 		return rezultat;
 	}
+	
+	public static <T> boolean contains(T[] array, T item)
+	{
+		Vector<Integer> vec = Arrays.findAll(array, item);
+		if (vec.size() > 0)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 }
 	
 
